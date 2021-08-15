@@ -58,8 +58,8 @@ class Player():
         if key[pygame.K_SPACE] and self.jumped == False:
             self.vel_y = -15
             self.jumped = True
-        if key[pygame.K_SPACE] == False:
-            self.jumped = False
+        # if key[pygame.K_SPACE] == False:
+        #     self.jumped = False
         if key[pygame.K_LEFT]:
             dx -= 5
             self.counter += 1
@@ -86,8 +86,8 @@ class Player():
 
         #gravity
         self.vel_y += 1
-        if self.vel_y > 15:
-            self.vel_y = 15
+        if self.vel_y > 10:
+            self.vel_y = 10
         dy += self.vel_y
 
         #check for collision
@@ -106,6 +106,7 @@ class Player():
                 elif self.vel_y >= 0:
                     dy = tile[1].top - self.rect.bottom
                     self.vel_y = 0
+                    self.jumped = False
 
         #update player coords
         self.rect.x += dx
