@@ -38,7 +38,6 @@ class Player():
             img_right = pygame.transform.flip(img_left, True, False)
             self.images_right.append(img_right)
             self.images_left.append(img_left)
-        #self.image = pygame.transform.scale(img, (80, 40))
         self.image = self.images_right[self.index]
         self.rect = self.image.get_rect()
         self.rect.x = x
@@ -62,8 +61,6 @@ class Player():
             if key[pygame.K_SPACE] and self.jumped == False:
                 self.vel_y = -15
                 self.jumped = True
-            # if key[pygame.K_SPACE] == False:
-            #     self.jumped = False
             if key[pygame.K_LEFT]:
                 dx -= 5
                 self.counter += 1
@@ -170,7 +167,6 @@ class Enemy(pygame.sprite.Sprite):
         self.images_left = []
         self.images_right = []
         self.index = 0
-        #self.image = pygame.transform.scale(self.image, (tile_size, int(tile_size/2)))
         for num in range(2):
             img_left = pygame.image.load(f'img/ant{num}.png')
             img_left = pygame.transform.scale(img_left, (tile_size, tile_size//2))
