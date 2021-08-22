@@ -14,6 +14,7 @@ pygame.display.set_caption('Korean Juke')
 
 #define game variables
 tile_size = 50
+game_over = 0
 
 #load images
 background_image = pygame.image.load('img/background.jpg')
@@ -52,69 +53,72 @@ class Player():
         dx = 0
         dy = 0
         walk_cooldown = 10
+        global game_over
 
-        #get key presses
-        key = pygame.key.get_pressed()
-        if key[pygame.K_SPACE] and self.jumped == False:
-            self.vel_y = -15
-            self.jumped = True
-        # if key[pygame.K_SPACE] == False:
-        #     self.jumped = False
-        if key[pygame.K_LEFT]:
-            dx -= 5
-            self.counter += 1
-            self.direction = -1
-        if key[pygame.K_RIGHT]:
-            dx += 5
-            self.counter += 1
-            self.direction = 1
-        if key[pygame.K_LEFT] == False and key[pygame.K_RIGHT] == False:
-            self.counter = 0
-            self.index = 0
-            self.image = self.images_left[self.index]
-        
-        #animation
-        if self.counter > walk_cooldown:
-            self.counter = 0
-            self.index += 1
-            if self.index >= len(self.images_left):
+        if game_over == 0:
+
+            #get key presses
+            key = pygame.key.get_pressed()
+            if key[pygame.K_SPACE] and self.jumped == False:
+                self.vel_y = -15
+                self.jumped = True
+            # if key[pygame.K_SPACE] == False:
+            #     self.jumped = False
+            if key[pygame.K_LEFT]:
+                dx -= 5
+                self.counter += 1
+                self.direction = -1
+            if key[pygame.K_RIGHT]:
+                dx += 5
+                self.counter += 1
+                self.direction = 1
+            if key[pygame.K_LEFT] == False and key[pygame.K_RIGHT] == False:
+                self.counter = 0
                 self.index = 0
-        if self.direction == 1:
-            self.image = self.images_right[self.index]
-        if self.direction == -1:
-            self.image = self.images_left[self.index]
+                self.image = self.images_left[self.index]
+            
+            #animation
+            if self.counter > walk_cooldown:
+                self.counter = 0
+                self.index += 1
+                if self.index >= len(self.images_left):
+                    self.index = 0
+            if self.direction == 1:
+                self.image = self.images_right[self.index]
+            if self.direction == -1:
+                self.image = self.images_left[self.index]
 
-        #gravity
-        self.vel_y += 1
-        if self.vel_y > 10:
-            self.vel_y = 10
-        dy += self.vel_y
+            #gravity
+            self.vel_y += 1
+            if self.vel_y > 10:
+                self.vel_y = 10
+            dy += self.vel_y
 
-        #check for collision
-        for tile in world.tile_list:
-            #check for collision in x direction
-            if tile[1].colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
-                dx = 0
+            #check for collision
+            for tile in world.tile_list:
+                #check for collision in x direction
+                if tile[1].colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
+                    dx = 0
 
-            #check for collision in y direction
-            if tile[1].colliderect(self.rect.x, self.rect.y + dy, self.width, self.height):
-                #check of below the ground i.e. jumping
-                if self.vel_y < 0:
-                    dy = tile[1].bottom - self.rect.top
-                    self.vel_y = 0
-                #check of below the ground i.e. falling
-                elif self.vel_y >= 0:
-                    dy = tile[1].top - self.rect.bottom
-                    self.vel_y = 0
-                    self.jumped = False
+                #check for collision in y direction
+                if tile[1].colliderect(self.rect.x, self.rect.y + dy, self.width, self.height):
+                    #check of below the ground i.e. jumping
+                    if self.vel_y < 0:
+                        dy = tile[1].bottom - self.rect.top
+                        self.vel_y = 0
+                    #check of below the ground i.e. falling
+                    elif self.vel_y >= 0:
+                        dy = tile[1].top - self.rect.bottom
+                        self.vel_y = 0
+                        self.jumped = False
+            
+            #check for collision with enemies
+            if pygame.sprite.spritecollide(self, ant_group, False):
+                game_over = -1
 
-        #update player coords
-        self.rect.x += dx
-        self.rect.y += dy
-
-        if self.rect.bottom > screen_height:
-            self.rect.bottom = screen_height
-            dy = 0
+            #update player coords
+            self.rect.x += dx
+            self.rect.y += dy
 
         #draw player onto screen
         screen.blit(self.image, self.rect)
@@ -235,7 +239,9 @@ while run:
 
     world.draw()
 
-    ant_group.update()
+    if game_over == 0:
+        ant_group.update()
+
     ant_group.draw(screen)
 
     player.update()
