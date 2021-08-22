@@ -148,6 +148,9 @@ class World():
                     img_rect.y = row_count * tile_size
                     tile = (img, img_rect)
                     self.tile_list.append(tile)
+                if tile == 3:
+                    ant = Enemy(col_count * tile_size, row_count * tile_size + tile_size//2)
+                    ant_group.add(ant)
                 col_count += 1
             row_count += 1
     
@@ -155,6 +158,49 @@ class World():
         for tile in self.tile_list:
             screen.blit(tile[0], tile[1])
             pygame.draw.rect(screen, (255, 255, 255), tile[1], 2)
+
+
+class Enemy(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        pygame.sprite.Sprite.__init__(self)
+        self.images_left = []
+        self.images_right = []
+        self.index = 0
+        #self.image = pygame.transform.scale(self.image, (tile_size, int(tile_size/2)))
+        for num in range(2):
+            img_left = pygame.image.load(f'img/ant{num}.png')
+            img_left = pygame.transform.scale(img_left, (tile_size, tile_size//2))
+            img_right = pygame.transform.flip(img_left, True, False)
+            self.images_right.append(img_right)
+            self.images_left.append(img_left)
+        self.image = self.images_right[self.index]
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+        self.move_direction = 1
+        self.move_counter = 0
+        self.animation_counter = 0
+    
+    def update(self):
+        walk_cooldown = 10
+        self.rect.x += self.move_direction
+        self.move_counter += 1
+        self.animation_counter += 1
+        if self.move_counter > 100:
+            self.move_direction *= -1
+            self.move_counter *= -1
+        
+        #animation
+        if self.animation_counter > walk_cooldown:
+            self.animation_counter = 0
+            self.index += 1
+            if self.index >= len(self.images_left):
+                self.index = 0
+        if self.move_direction == 1:
+            self.image = self.images_right[self.index]
+        if self.move_direction == -1:
+            self.image = self.images_left[self.index]
+
 
 world_data = [
 [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 
@@ -167,7 +213,7 @@ world_data = [
 [1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], 
 [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 0, 1], 
 [1, 0, 2, 0, 0, 7, 0, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], 
-[1, 0, 0, 2, 0, 0, 4, 0, 0, 0, 0, 3, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 1], 
+[1, 0, 0, 2, 0, 0, 4, 0, 0, 0, 0, 3, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], 
 [1, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 1], 
 [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], 
 [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 0, 7, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 1], 
@@ -176,6 +222,9 @@ world_data = [
 ]
 
 player = Player(100, screen_height - 130)
+
+ant_group = pygame.sprite.Group()
+
 world = World(world_data)
 
 run = True
@@ -186,10 +235,10 @@ while run:
 
     world.draw()
 
+    ant_group.update()
+    ant_group.draw(screen)
+
     player.update()
-
-    #draw_grid()
-
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
