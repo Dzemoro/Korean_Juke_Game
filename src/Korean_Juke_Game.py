@@ -17,6 +17,7 @@ tile_size = 50
 game_over = 0
 red_switches_state = 0
 blue_switches_state = 0
+is_ball_picked_up = 0
 
 #load images
 background_image = pygame.image.load('img/background.bmp')
@@ -55,13 +56,13 @@ class Player():
         dx = 0
         dy = 0
         walk_cooldown = 10
-        global game_over, red_switches_state, blue_switches_state
+        global game_over, red_switches_state, blue_switches_state, is_ball_picked_up
 
         if game_over == 0:
 
             #get key presses
             key = pygame.key.get_pressed()
-            if key[pygame.K_SPACE] and self.jumped == False:
+            if key[pygame.K_SPACE] and self.jumped == False and is_ball_picked_up == False:
                 self.vel_y = -15
                 self.jumped = True
             if key[pygame.K_LEFT]:
@@ -129,6 +130,7 @@ class Player():
 class World():
     def __init__(self, data):
         self.tile_list = []
+        global ball
 
         #load images
         dirt_img = pygame.image.load('img/dirt.png')
@@ -161,6 +163,9 @@ class World():
                 if tile == 9:
                     red_switch = RedSwitch(col_count * tile_size, row_count * tile_size)
                     red_switch_group.add(red_switch)
+                if tile == 10:
+                    ball = Ball(col_count * tile_size, row_count * tile_size)
+                    ball_group.add(ball)
                 col_count += 1
             row_count += 1
     
@@ -176,7 +181,6 @@ class Switch(pygame.sprite.Sprite):
         self.switch_images = []
         self.index = 0
         self.switch_state = 0
-        #self.switchPath = 'img//img{}.png'
         for num in range(2):
             img = pygame.image.load(self.switchPath.format(num))
             img = pygame.transform.scale(img, (tile_size, tile_size))
@@ -261,11 +265,51 @@ class Enemy(pygame.sprite.Sprite):
         if self.move_direction == -1:
             self.image = self.images_left[self.index]
 
+class Ball(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.image.load(f'img/korea_ball.png')
+        self.image = pygame.transform.scale(self.image, (tile_size, tile_size))
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+        self.is_picked_up = False
+    
+    def update(self, world_data, player):
+        global is_ball_picked_up
+        if self.is_picked_up:
+            block_px = (player.rect.x+40)//50
+            if block_px % 50 > 25:
+                block_px += 1
+            block_py = (player.rect.y+20)//50
+            if block_py % 50 > 25:
+                block_py += 1
+            #print(block_px, block_py)
+            if world_data[block_py + 1][block_px] == 1 or world_data[block_py + 1][block_px] == 2:
+                world_data[block_py][block_px] = 10
+                self.rect.x = block_px * 50
+                self.rect.y = block_py * 50
+                self.is_picked_up = False
+                is_ball_picked_up = self.is_picked_up
+        else:
+            block_px = (self.rect.x+40)//50
+            if block_px % 50 > 25:
+                block_px += 1
+            block_py = (self.rect.y+20)//50
+            if block_py % 50 > 25:
+                block_py += 1
+            world_data[block_py][block_px] = 0
+            self.rect.x = 100000
+            self.rect.y = 100000
+            self.is_picked_up = True
+            is_ball_picked_up = self.is_picked_up
+
+
 
 world_data = [
 [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 
 [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], 
-[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], 
+[1, 0, 0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], 
 [1, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], 
 [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 2, 0, 0, 0, 2, 0, 0, 0, 0, 1], 
 [1, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 9, 2, 1, 0, 2, 2, 1, 0, 0, 0, 0, 1], 
@@ -287,6 +331,7 @@ ant_group = pygame.sprite.Group()
 
 red_switch_group = pygame.sprite.Group()
 blue_switch_group = pygame.sprite.Group()
+ball_group = pygame.sprite.Group()
 
 world = World(world_data)
 
@@ -305,6 +350,7 @@ while run:
 
     red_switch_group.draw(screen)
     blue_switch_group.draw(screen)
+    ball_group.draw(screen)
 
     player.update()
 
@@ -318,6 +364,8 @@ while run:
                                 red_switch.update()
                         if pygame.sprite.spritecollide(player, blue_switch_group, False):
                             blue_switch_group.update()
+                    if event.key == pygame.K_g:
+                        ball_group.update(world_data, player)
     pygame.display.update()
 
 pygame.quit()
