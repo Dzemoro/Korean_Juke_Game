@@ -19,7 +19,7 @@ red_switches_state = 0
 blue_switches_state = 0
 
 #load images
-background_image = pygame.image.load('img/background.jpg')
+background_image = pygame.image.load('img/background.bmp')
 background_image = pygame.transform.scale(background_image, (screen_width, screen_height))
 
 def draw_grid():
@@ -113,8 +113,8 @@ class Player():
                         self.jumped = False
             
             #check for collision with enemies
-            if pygame.sprite.spritecollide(self, ant_group, False):
-                game_over = -1
+            #if pygame.sprite.spritecollide(self, ant_group, False):
+                #game_over = -1
 
             #update player coords
             self.rect.x += dx
@@ -155,10 +155,12 @@ class World():
                 if tile == 3:
                     ant = Enemy(col_count * tile_size, row_count * tile_size + tile_size//2)
                     ant_group.add(ant)
+                if tile == 8:
+                    blue_switch = BlueSwitch(col_count * tile_size, row_count * tile_size)
+                    blue_switch_group.add(blue_switch)
                 if tile == 9:
                     red_switch = RedSwitch(col_count * tile_size, row_count * tile_size)
                     red_switch_group.add(red_switch)
-
                 col_count += 1
             row_count += 1
     
@@ -168,31 +170,55 @@ class World():
             pygame.draw.rect(screen, (255, 255, 255), tile[1], 2)
 
 
-class RedSwitch(pygame.sprite.Sprite):
-    def __init__(self, x, y):
+class Switch(pygame.sprite.Sprite):
+    def __init__(self, x, y, switchPath):
         pygame.sprite.Sprite.__init__(self)
-        self.red_switch_images = []
+        self.switch_images = []
         self.index = 0
+        self.switch_state = 0
+        #self.switchPath = 'img//img{}.png'
         for num in range(2):
-            img = pygame.image.load(f'img/redSwitch{num}.png')
+            img = pygame.image.load(self.switchPath.format(num))
             img = pygame.transform.scale(img, (tile_size, tile_size))
-            self.red_switch_images.append(img)
-        self.image = self.red_switch_images[self.index]
+            self.switch_images.append(img)
+        self.image = self.switch_images[self.index]
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
 
+
+class RedSwitch(Switch):
+    def __init__(self, x, y):
+        self.switchPath = 'img//redSwitch{}.png'
+        Switch.__init__(self, x, y, self.switchPath)
+    
     def update(self):
         global red_switches_state
-        if red_switches_state == 0:
+        if self.switch_state == 0:
             self.index = 1
-            red_switches_state = 1
+            self.switch_state = 1
         else:
             self.index = 0
-            red_switches_state = 0
-        self.image = self.red_switch_images[self.index]
+            self.switch_state = 0
+        self.image = self.switch_images[self.index]
+        red_switches_state = self.switch_state
 
 
+class BlueSwitch(Switch):
+    def __init__(self, x, y):
+        self.switchPath = 'img//blueSwitch{}.png'
+        Switch.__init__(self, x, y, self.switchPath)
+    
+    def update(self):
+        global blue_switches_state
+        if self.switch_state == 0:
+            self.index = 1
+            self.switch_state = 1
+        else:
+            self.index = 0
+            self.switch_state = 0
+        self.image = self.switch_images[self.index]
+        blue_switches_state = self.switch_state
             
 
 class Enemy(pygame.sprite.Sprite):
@@ -241,7 +267,7 @@ world_data = [
 [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], 
 [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], 
 [1, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], 
-[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 0, 1], 
+[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 2, 0, 0, 0, 2, 0, 0, 0, 0, 1], 
 [1, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 9, 2, 1, 0, 2, 2, 1, 0, 0, 0, 0, 1], 
 [1, 0, 0, 2, 2, 2, 2, 2, 2, 4, 4, 2, 2, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 1], 
 [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], 
@@ -260,6 +286,7 @@ player = Player(tile_size, tile_size)
 ant_group = pygame.sprite.Group()
 
 red_switch_group = pygame.sprite.Group()
+blue_switch_group = pygame.sprite.Group()
 
 world = World(world_data)
 
@@ -277,6 +304,7 @@ while run:
     ant_group.draw(screen)
 
     red_switch_group.draw(screen)
+    blue_switch_group.draw(screen)
 
     player.update()
 
@@ -285,7 +313,11 @@ while run:
             run = False
         if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_e:
-                        red_switch_group.update()
+                        if pygame.sprite.spritecollide(player, red_switch_group, False):
+                            for red_switch in red_switch_group:
+                                red_switch.update()
+                        if pygame.sprite.spritecollide(player, blue_switch_group, False):
+                            blue_switch_group.update()
     pygame.display.update()
 
 pygame.quit()
