@@ -15,6 +15,8 @@ pygame.display.set_caption('Korean Juke')
 #define game variables
 tile_size = 50
 game_over = 0
+red_switches_state = 0
+blue_switches_state = 0
 
 #load images
 background_image = pygame.image.load('img/background.jpg')
@@ -46,13 +48,14 @@ class Player():
         self.height = self.image.get_height()
         self.vel_y = 0
         self.jumped = False
+        self.switched = False
         self.direction = 0
 
     def update(self):
         dx = 0
         dy = 0
         walk_cooldown = 10
-        global game_over
+        global game_over, red_switches_state, blue_switches_state
 
         if game_over == 0:
 
@@ -152,6 +155,10 @@ class World():
                 if tile == 3:
                     ant = Enemy(col_count * tile_size, row_count * tile_size + tile_size//2)
                     ant_group.add(ant)
+                if tile == 9:
+                    red_switch = RedSwitch(col_count * tile_size, row_count * tile_size)
+                    red_switch_group.add(red_switch)
+
                 col_count += 1
             row_count += 1
     
@@ -160,6 +167,33 @@ class World():
             screen.blit(tile[0], tile[1])
             pygame.draw.rect(screen, (255, 255, 255), tile[1], 2)
 
+
+class RedSwitch(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        pygame.sprite.Sprite.__init__(self)
+        self.red_switch_images = []
+        self.index = 0
+        for num in range(2):
+            img = pygame.image.load(f'img/redSwitch{num}.png')
+            img = pygame.transform.scale(img, (tile_size, tile_size))
+            self.red_switch_images.append(img)
+        self.image = self.red_switch_images[self.index]
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+
+    def update(self):
+        global red_switches_state
+        if red_switches_state == 0:
+            self.index = 1
+            red_switches_state = 1
+        else:
+            self.index = 0
+            red_switches_state = 0
+        self.image = self.red_switch_images[self.index]
+
+
+            
 
 class Enemy(pygame.sprite.Sprite):
     def __init__(self, x, y):
@@ -225,6 +259,8 @@ player = Player(tile_size, tile_size)
 
 ant_group = pygame.sprite.Group()
 
+red_switch_group = pygame.sprite.Group()
+
 world = World(world_data)
 
 run = True
@@ -240,11 +276,16 @@ while run:
 
     ant_group.draw(screen)
 
+    red_switch_group.draw(screen)
+
     player.update()
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
+        if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_e:
+                        red_switch_group.update()
     pygame.display.update()
 
 pygame.quit()
