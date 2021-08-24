@@ -28,29 +28,9 @@ def draw_grid():
 		pygame.draw.line(screen, (255, 255, 255), (0, line * tile_size), (screen_width, line * tile_size))
 		pygame.draw.line(screen, (255, 255, 255), (line * tile_size, 0), (line * tile_size, screen_height))
 
-
 class Player():
     def __init__(self, x, y):
-        self.images_right = []
-        self.images_left = []
-        self.index = 0
-        self.counter = 0
-        for num in range(2):
-            img_left = pygame.image.load(f'img/juke{num}.png')
-            img_left = pygame.transform.scale(img_left, (80, 40))
-            img_right = pygame.transform.flip(img_left, True, False)
-            self.images_right.append(img_right)
-            self.images_left.append(img_left)
-        self.image = self.images_right[self.index]
-        self.rect = self.image.get_rect()
-        self.rect.x = x
-        self.rect.y = y
-        self.width = self.image.get_width()
-        self.height = self.image.get_height()
-        self.vel_y = 0
-        self.jumped = False
-        self.switched = False
-        self.direction = 0
+        self.reset(x, y)
 
     def update(self):
         dx = 0
@@ -114,8 +94,8 @@ class Player():
                         self.jumped = False
             
             #check for collision with enemies
-            #if pygame.sprite.spritecollide(self, ant_group, False):
-                #game_over = -1
+            if pygame.sprite.spritecollide(self, ant_group, False):
+                game_over = -1
 
             #update player coords
             self.rect.x += dx
@@ -124,8 +104,27 @@ class Player():
         #draw player onto screen
         screen.blit(self.image, self.rect)
         pygame.draw.rect(screen, (255,255,255), self.rect, 2)
-
-
+    def reset(self, x, y):
+        self.images_right = []
+        self.images_left = []
+        self.index = 0
+        self.counter = 0
+        for num in range(2):
+            img_left = pygame.image.load(f'img/juke{num}.png')
+            img_left = pygame.transform.scale(img_left, (80, 40))
+            img_right = pygame.transform.flip(img_left, True, False)
+            self.images_right.append(img_right)
+            self.images_left.append(img_left)
+        self.image = self.images_right[self.index]
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+        self.width = self.image.get_width()
+        self.height = self.image.get_height()
+        self.vel_y = 0
+        self.jumped = False
+        self.switched = False
+        self.direction = 0
 
 class World():
     def __init__(self, data):
@@ -313,31 +312,36 @@ class Ball(pygame.sprite.Sprite):
     
     def update(self, world_data, player):
         global is_ball_picked_up
-        if self.is_picked_up:
-            block_px = (player.rect.x+40)//50
-            if block_px % 50 > 25:
-                block_px += 1
-            block_py = (player.rect.y+20)//50
-            if block_py % 50 > 25:
-                block_py += 1
-            if world_data[block_py + 1][block_px] == 1 or world_data[block_py + 1][block_px] == 2:
-                world_data[block_py][block_px] = 10
-                self.rect.x = block_px * 50
-                self.rect.y = block_py * 50
-                self.is_picked_up = False
+        if game_over == 0:
+            if self.is_picked_up:
+                block_px = (player.rect.x+40)//50
+                if block_px % 50 > 25:
+                    block_px += 1
+                block_py = (player.rect.y+20)//50
+                if block_py % 50 > 25:
+                    block_py += 1
+                if world_data[block_py + 1][block_px] == 1 or world_data[block_py + 1][block_px] == 2:
+                    world_data[block_py][block_px] = 10
+                    self.rect.x = block_px * 50
+                    self.rect.y = block_py * 50
+                    self.is_picked_up = False
+                    is_ball_picked_up = self.is_picked_up
+            else:
+                block_px = (self.rect.x+40)//50
+                if block_px % 50 > 25:
+                    block_px += 1
+                block_py = (self.rect.y+20)//50
+                if block_py % 50 > 25:
+                    block_py += 1
+                world_data[block_py][block_px] = 0
+                self.rect.x = 100000
+                self.rect.y = 100000
+                self.is_picked_up = True
                 is_ball_picked_up = self.is_picked_up
         else:
-            block_px = (self.rect.x+40)//50
-            if block_px % 50 > 25:
-                block_px += 1
-            block_py = (self.rect.y+20)//50
-            if block_py % 50 > 25:
-                block_py += 1
-            world_data[block_py][block_px] = 0
-            self.rect.x = 100000
-            self.rect.y = 100000
-            self.is_picked_up = True
-            is_ball_picked_up = self.is_picked_up
+            self.rect.x = 4 * 50
+            self.rect.y = 2 * 50
+            self.is_picked_up = is_ball_picked_up
 
 class Block(pygame.sprite.Sprite):
     def __init__(self, x, y, image_path):
@@ -429,6 +433,14 @@ while run:
 
     player.update()
 
+    if game_over == -1:
+        player.reset(tile_size, tile_size)
+        red_switches_state = 0
+        blue_switches_state = 0
+        is_ball_picked_up = 0
+        ball_group.update(world_data, player)
+        game_over = 0
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
@@ -441,7 +453,10 @@ while run:
                             blue_switch_group.update()
                             blue_block_group.update()
                     if event.key == pygame.K_g:
-                        ball_group.update(world_data, player)
+                        if pygame.sprite.spritecollide(player, ball_group, False) and is_ball_picked_up == 0:
+                            ball_group.update(world_data, player)
+                        elif is_ball_picked_up == 1:
+                            ball_group.update(world_data, player)
     pygame.display.update()
 
 pygame.quit()
