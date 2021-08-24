@@ -6,7 +6,8 @@ Textures mapping:
 3 - ant
 4 - blue block with increased transparency
 5 - red block with increased transparency
-6 - blue block
-7 - red block
 8 - blue switch
 9 - red switch
+10 - ball
+11 - start
+12 - end
