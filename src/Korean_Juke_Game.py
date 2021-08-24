@@ -130,11 +130,14 @@ class Player():
 class World():
     def __init__(self, data):
         self.tile_list = []
+        self.transparent_blocks = []
         global ball
 
         #load images
         dirt_img = pygame.image.load('img/dirt.png')
         dirt_with_grass_img = pygame.image.load('img/dirt_with_grass.png')
+        transparent_red_block = pygame.image.load('img/red/red_transparent.png')
+        transparent_blue_block = pygame.image.load('img/blue/blue_transparent.png')
 
         row_count = 0
         for row in data:
@@ -157,6 +160,36 @@ class World():
                 if tile == 3:
                     ant = Enemy(col_count * tile_size, row_count * tile_size + tile_size//2)
                     ant_group.add(ant)
+                if tile == 4:
+                    img = pygame.transform.scale(transparent_blue_block, (tile_size, tile_size))
+                    img_rect = img.get_rect()
+                    img_rect.x = col_count * tile_size
+                    img_rect.y = row_count * tile_size
+                    tile = (img, img_rect)
+                    self.transparent_blocks.append(tile)
+
+                    blue_block = BlueBlock(col_count * tile_size, row_count * tile_size)
+                    block_tile = (blue_block.image, blue_block.rect)
+                    self.tile_list.append(block_tile)
+                    blue_block_group.add(blue_block)
+                if tile == 5:
+                    img = pygame.transform.scale(transparent_red_block, (tile_size, tile_size))
+                    img_rect = img.get_rect()
+                    img_rect.x = col_count * tile_size
+                    img_rect.y = row_count * tile_size
+                    tile = (img, img_rect)
+                    self.transparent_blocks.append(tile)
+
+                    red_block = RedBlock(col_count * tile_size + 1000, row_count * tile_size + 1000)
+                    block_tile = (red_block.image, red_block.rect)
+                    self.tile_list.append(block_tile)
+                    red_block_group.add(red_block)
+                if tile == 6:
+                    blue_block = BlueBlock(col_count * tile_size, row_count * tile_size)
+                    blue_block_group.add(blue_block)
+                if tile == 7:
+                    red_block = RedBlock(col_count * tile_size, row_count * tile_size)
+                    red_block_group.add(red_block)
                 if tile == 8:
                     blue_switch = BlueSwitch(col_count * tile_size, row_count * tile_size)
                     blue_switch_group.add(blue_switch)
@@ -173,6 +206,9 @@ class World():
         for tile in self.tile_list:
             screen.blit(tile[0], tile[1])
             pygame.draw.rect(screen, (255, 255, 255), tile[1], 2)
+        for block in self.transparent_blocks:
+            screen.blit(block[0], block[1])
+            pygame.draw.rect(screen, (255, 255, 255), block[1], 2)
 
 
 class Switch(pygame.sprite.Sprite):
@@ -284,7 +320,6 @@ class Ball(pygame.sprite.Sprite):
             block_py = (player.rect.y+20)//50
             if block_py % 50 > 25:
                 block_py += 1
-            #print(block_px, block_py)
             if world_data[block_py + 1][block_px] == 1 or world_data[block_py + 1][block_px] == 2:
                 world_data[block_py][block_px] = 10
                 self.rect.x = block_px * 50
@@ -304,6 +339,42 @@ class Ball(pygame.sprite.Sprite):
             self.is_picked_up = True
             is_ball_picked_up = self.is_picked_up
 
+class Block(pygame.sprite.Sprite):
+    def __init__(self, x, y, image_path):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.image.load(image_path)
+        self.image = pygame.transform.scale(self.image, (tile_size, tile_size))
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+
+class RedBlock(Block):
+    def __init__(self, x, y):
+        self.image_path = f'img/red/dirt.png'
+        Block.__init__(self, x, y, self.image_path)
+    
+    def update(self):
+        if red_switches_state == 0:
+            self.rect.x = self.rect.x + 1000
+            self.rect.y = self.rect.y + 1000
+        else:
+            self.rect.x = self.rect.x - 1000
+            self.rect.y = self.rect.y - 1000
+
+
+class BlueBlock(Block):
+    def __init__(self, x, y):
+        self.image_path = f'img/blue/dirt.png'
+        Block.__init__(self, x, y, self.image_path)
+    
+    def update(self):
+        if blue_switches_state == 0:
+            self.rect.x = self.rect.x - 1000
+            self.rect.y = self.rect.y - 1000
+        else:
+            self.rect.x = self.rect.x + 1000
+            self.rect.y = self.rect.y + 1000
+
 
 
 world_data = [
@@ -320,7 +391,7 @@ world_data = [
 [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 1], 
 [1, 0, 0, 0, 0, 0, 0, 0, 8, 0, 4, 0, 0, 0, 5, 0, 0, 3, 0, 0, 0, 0, 8, 1], 
 [1, 0, 0, 2, 2, 5, 5, 5, 2, 2, 5, 5, 5, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1], 
-[1, 0, 0, 1, 0, 0, 0, 0, 1, 1, 7, 0, 7, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 
+[1, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 
 [1, 0, 0, 1, 0, 0, 3, 0, 0, 0, 0, 3, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 
 [1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] 
 ]
@@ -332,6 +403,8 @@ ant_group = pygame.sprite.Group()
 red_switch_group = pygame.sprite.Group()
 blue_switch_group = pygame.sprite.Group()
 ball_group = pygame.sprite.Group()
+blue_block_group = pygame.sprite.Group()
+red_block_group = pygame.sprite.Group()
 
 world = World(world_data)
 
@@ -351,6 +424,8 @@ while run:
     red_switch_group.draw(screen)
     blue_switch_group.draw(screen)
     ball_group.draw(screen)
+    blue_block_group.draw(screen)
+    red_block_group.draw(screen)
 
     player.update()
 
@@ -360,10 +435,11 @@ while run:
         if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_e:
                         if pygame.sprite.spritecollide(player, red_switch_group, False):
-                            for red_switch in red_switch_group:
-                                red_switch.update()
+                            red_switch_group.update()
+                            red_block_group.update()
                         if pygame.sprite.spritecollide(player, blue_switch_group, False):
                             blue_switch_group.update()
+                            blue_block_group.update()
                     if event.key == pygame.K_g:
                         ball_group.update(world_data, player)
     pygame.display.update()
