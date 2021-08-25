@@ -28,8 +28,8 @@ start_image = pygame.image.load('img/button/start.png')
 start_image = pygame.transform.scale(start_image, (2*tile_size, 2*tile_size))
 exit_image = pygame.image.load('img/button/exit.png')
 exit_image = pygame.transform.scale(exit_image, (2*tile_size, 2*tile_size))
-help_image = pygame.image.load('img/button/help.png')
-help_image = pygame.transform.scale(help_image, (2*tile_size, 2*tile_size))
+title_image = pygame.image.load('img/title.png')
+title_image = pygame.transform.scale(title_image, (12*tile_size, 6*tile_size))
 
 class Button():
     def __init__(self, x, y, image):
@@ -508,8 +508,6 @@ world = World(world_data)
 #buttons
 start_button = Button(screen_width // 2 - 50, screen_height // 2, start_image)
 exit_button = Button(screen_width // 2 - 50, screen_height // 2  + 125, exit_image)
-help_button = Button(screen_width // 2 - 50, screen_height // 2  + 250, help_image)
-back_button = Button(screen_width // 2 - 50, screen_height // 2, start_image)
 
 #credits variables
 red = (255,0,0)
@@ -540,6 +538,7 @@ while run:
     screen.blit(background_image, (0, 0))
 
     if main_menu == True:
+        screen.blit(title_image, (screen_width // 2 - 6*tile_size, screen_height // 2 - 7*tile_size))
         if exit_button.draw():
             run = False
         if start_button.draw():
