@@ -19,7 +19,8 @@ All used in game textures and corresponding ID in maps is displayed in table bel
 |7|-|-|-|No|
 |8|Blue switch|32x32|![image](img/blueSwitch0.png)| Yes (2)|
 |9|Red switch|32x32|![image](img/redSwitch0.png)| Yes (2)|
-|-|Juke|54x32|![image](img/juke0.png)| Yes|
+|-|Juke|54x32|![image](img/juke0.png)| Yes (2)|
+|-|Juke|54x48|![image](img/juke_with_ball0.png)| Yes (2)|
 |-|Ball|32x32|![image](img/korea_ball.png)|No|
 |-|Lamp|32x32|![image](img/lamp.png)|No|
 |-|Grass|32x32|![image](img/grass.png)|No|
