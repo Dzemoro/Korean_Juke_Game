@@ -10,10 +10,11 @@ screen_width = 1200
 screen_height = 800
 
 screen = pygame.display.set_mode((screen_width, screen_height))
-pygame.display.set_caption('Korean Juke')
+pygame.display.set_caption('Korean Juke Game')
 
 #define game variables
 main_menu = True
+credits_menu = False
 tile_size = 50
 game_over = 0
 red_switches_state = 0
@@ -24,12 +25,11 @@ is_ball_picked_up = 0
 background_image = pygame.image.load('img/background.bmp')
 background_image = pygame.transform.scale(background_image, (screen_width, screen_height))
 start_image = pygame.image.load('img/button/start.png')
+start_image = pygame.transform.scale(start_image, (2*tile_size, 2*tile_size))
 exit_image = pygame.image.load('img/button/exit.png')
-
-# def draw_grid():
-# 	for line in range(0, 24):
-# 		pygame.draw.line(screen, (255, 255, 255), (0, line * tile_size), (screen_width, line * tile_size))
-# 		pygame.draw.line(screen, (255, 255, 255), (line * tile_size, 0), (line * tile_size, screen_height))
+exit_image = pygame.transform.scale(exit_image, (2*tile_size, 2*tile_size))
+title_image = pygame.image.load('img/title.png')
+title_image = pygame.transform.scale(title_image, (12*tile_size, 6*tile_size))
 
 class Button():
     def __init__(self, x, y, image):
@@ -54,7 +54,6 @@ class Button():
         if pygame.mouse.get_pressed()[0] == 0:
             self.clicked = False
 
-
         #draw button
         screen.blit(self.image, self.rect)
 
@@ -68,14 +67,14 @@ class Player():
         dx = 0
         dy = 0
         walk_cooldown = 10
-        global game_over, red_switches_state, blue_switches_state, is_ball_picked_up
+        global game_over, red_switches_state, blue_switches_state, is_ball_picked_up, credits_menu
 
         if game_over == 0:
 
             #get key presses
             key = pygame.key.get_pressed()
             if key[pygame.K_SPACE] and self.jumped == False and is_ball_picked_up == False:
-                self.vel_y = -15
+                self.vel_y = -18
                 self.jumped = True
             if key[pygame.K_LEFT]:
                 dx -= 5
@@ -91,15 +90,26 @@ class Player():
                 self.image = self.images_left[self.index]
             
             #animation
-            if self.counter > walk_cooldown:
-                self.counter = 0
-                self.index += 1
-                if self.index >= len(self.images_left):
-                    self.index = 0
-            if self.direction == 1:
-                self.image = self.images_right[self.index]
-            if self.direction == -1:
-                self.image = self.images_left[self.index]
+            if is_ball_picked_up == 0:
+                if self.counter > walk_cooldown:
+                    self.counter = 0
+                    self.index += 1
+                    if self.index >= len(self.images_left):
+                        self.index = 0
+                if self.direction == 1:
+                    self.image = self.images_right[self.index]
+                if self.direction == -1:
+                    self.image = self.images_left[self.index]
+            if is_ball_picked_up == 1:
+                if self.counter > walk_cooldown:
+                    self.counter = 0
+                    self.index += 1
+                    if self.index >= len(self.images_left_with_ball):
+                        self.index = 0
+                if self.direction == 1:
+                    self.image = self.images_right_with_ball[self.index]
+                if self.direction == -1:
+                    self.image = self.images_left_with_ball[self.index]
 
             #gravity
             self.vel_y += 1
@@ -124,9 +134,14 @@ class Player():
                         dy = tile[1].top - self.rect.bottom
                         self.vel_y = 0
                         self.jumped = False
-            
+
             #check for collision with enemies
             if pygame.sprite.spritecollide(self, ant_group, False):
+                game_over = -1
+            
+            if pygame.sprite.spritecollide(self, end_blocks_group, False) and is_ball_picked_up:
+                credits_menu = True
+            if pygame.sprite.spritecollide(self, end_blocks_group, False) and is_ball_picked_up == False:
                 game_over = -1
 
             #update player coords
@@ -134,11 +149,16 @@ class Player():
             self.rect.y += dy
 
         #draw player onto screen
-        screen.blit(self.image, self.rect)
-        #pygame.draw.rect(screen, (255,255,255), self.rect, 2)
+        if is_ball_picked_up:
+            screen.blit(self.image, (self.rect.x, self.rect.y - 20))
+        else:
+            screen.blit(self.image, self.rect)
+
     def reset(self, x, y):
         self.images_right = []
         self.images_left = []
+        self.images_right_with_ball = []
+        self.images_left_with_ball = []
         self.index = 0
         self.counter = 0
         for num in range(2):
@@ -147,6 +167,12 @@ class Player():
             img_right = pygame.transform.flip(img_left, True, False)
             self.images_right.append(img_right)
             self.images_left.append(img_left)
+        for num in range(2):
+            img_left = pygame.image.load(f'img/juke_with_ball{num}.png')
+            img_left = pygame.transform.scale(img_left, (80, 60))
+            img_right = pygame.transform.flip(img_left, True, False)
+            self.images_right_with_ball.append(img_right)
+            self.images_left_with_ball.append(img_left)
         self.image = self.images_right[self.index]
         self.rect = self.image.get_rect()
         self.rect.x = x
@@ -169,6 +195,9 @@ class World():
         dirt_with_grass_img = pygame.image.load('img/dirt_with_grass.png')
         transparent_red_block = pygame.image.load('img/red/red_transparent.png')
         transparent_blue_block = pygame.image.load('img/blue/blue_transparent.png')
+        blank = pygame.image.load('img/blank.png')
+        end_image = pygame.image.load('img/start_tent.png')
+        plane = pygame.image.load('img/end_plane.png')
 
         row_count = 0
         for row in data:
@@ -213,6 +242,15 @@ class World():
                     block_tile = (red_block.image, red_block.rect)
                     self.tile_list.append(block_tile)
                     red_block_group.add(red_block)
+                if tile == 6:
+                    img = pygame.transform.scale(end_image, (tile_size*2, tile_size))
+                    img_rect = img.get_rect()
+                    img_rect.x = col_count * tile_size
+                    img_rect.y = row_count * tile_size
+                    tile = (img, img_rect)
+                    self.transparent_blocks.append(tile)
+                    end_block = EndBlock(col_count * tile_size, row_count * tile_size)
+                    end_blocks_group.add(end_block)
                 if tile == 8:
                     blue_switch = BlueSwitch(col_count * tile_size, row_count * tile_size)
                     blue_switch_group.add(blue_switch)
@@ -222,16 +260,21 @@ class World():
                 if tile == 10:
                     ball = Ball(col_count * tile_size, row_count * tile_size)
                     ball_group.add(ball)
+                if tile == 11:
+                    img = pygame.transform.scale(plane, (tile_size*2, tile_size))
+                    img_rect = img.get_rect()
+                    img_rect.x = col_count * tile_size
+                    img_rect.y = row_count * tile_size
+                    tile = (img, img_rect)
+                    self.transparent_blocks.append(tile)
                 col_count += 1
             row_count += 1
     
     def draw(self):
         for tile in self.tile_list:
             screen.blit(tile[0], tile[1])
-            #pygame.draw.rect(screen, (255, 0, 0), tile[1], 2)
         for block in self.transparent_blocks:
             screen.blit(block[0], block[1])
-            #pygame.draw.rect(screen, (255, 255, 255), block[1], 2)
 
 
 class Switch(pygame.sprite.Sprite):
@@ -408,7 +451,6 @@ class RedBlock(Block):
             self.rect.x = self.start_x
             self.rect.y = self.start_y
 
-
 class BlueBlock(Block):
     def __init__(self, x, y):
         self.image_path = f'img/blue/dirt.png'
@@ -426,15 +468,19 @@ class BlueBlock(Block):
             self.rect.x = self.start_x
             self.rect.y = self.start_y
 
+class EndBlock(Block):
+    def __init__(self, x, y):
+        self.image_path = f'img/blank.png'
+        Block.__init__(self, x, y, self.image_path)
 
 world_data = [
-[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 
+[1, 11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], 
 [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], 
 [1, 0, 0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], 
 [1, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], 
 [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 8, 2, 0, 0, 0, 0, 1], 
-[1, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 9, 2, 1, 0, 2, 2, 1, 0, 0, 0, 0, 1], 
-[1, 0, 0, 2, 2, 2, 2, 2, 2, 4, 4, 2, 2, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 1], 
+[1, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 9, 2, 1, 0, 2, 2, 1, 0, 0, 0, 0, 1], 
+[1, 0, 0, 0, 2, 2, 2, 2, 2, 4, 4, 2, 2, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 1], 
 [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], 
 [1, 0, 0, 3, 0, 0, 0, 0, 1, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 1], 
 [1, 2, 2, 2, 2, 2, 0, 0, 1, 2, 2, 2, 2, 2, 2, 4, 4, 4, 2, 2, 2, 2, 2, 1], 
@@ -442,7 +488,7 @@ world_data = [
 [1, 0, 0, 0, 0, 0, 0, 0, 8, 0, 4, 0, 0, 0, 5, 0, 0, 3, 0, 0, 0, 0, 8, 1], 
 [1, 0, 0, 2, 2, 5, 5, 5, 2, 2, 5, 5, 5, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1], 
 [1, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 
-[1, 0, 0, 1, 0, 0, 3, 0, 0, 0, 0, 3, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 
+[1, 6, 0, 1, 0, 0, 3, 0, 0, 0, 0, 3, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 
 [1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] 
 ]
 
@@ -455,12 +501,35 @@ blue_switch_group = pygame.sprite.Group()
 ball_group = pygame.sprite.Group()
 blue_block_group = pygame.sprite.Group()
 red_block_group = pygame.sprite.Group()
+end_blocks_group = pygame.sprite.Group()
 
 world = World(world_data)
 
 #buttons
-start_button = Button(screen_width // 2 - 25, screen_height // 2, start_image)
-exit_button = Button(screen_width // 2 - 25, screen_height // 2  + 150, exit_image)
+start_button = Button(screen_width // 2 - 50, screen_height // 2, start_image)
+exit_button = Button(screen_width // 2 - 50, screen_height // 2  + 125, exit_image)
+
+#credits variables
+red = (255,0,0)
+green = (0,255,0)
+blue = (0,0,255)
+darkBlue = (0,0,128)
+white = (255,255,255)
+black = (0,0,0)
+pink = (255,200,200)
+
+movie_credits = '''
+KOREAN JUKE GAME
+
+SEBASTIAN SKROBICH      level designer
+ŁUKASZ WYLEGAŁA         game director
+TEN CO JE CHLEB         graphic designer
+
+POZNAN 2021
+'''
+
+centerx, centery = screen.get_rect().centerx, screen.get_rect().centery
+deltaY = centery + 50 
 
 run = True
 while run:
@@ -469,11 +538,11 @@ while run:
     screen.blit(background_image, (0, 0))
 
     if main_menu == True:
+        screen.blit(title_image, (screen_width // 2 - 6*tile_size, screen_height // 2 - 7*tile_size))
         if exit_button.draw():
             run = False
         if start_button.draw():
             main_menu = False
-    
     else:
 
         world.draw()
@@ -488,6 +557,7 @@ while run:
         ball_group.draw(screen)
         blue_block_group.draw(screen)
         red_block_group.draw(screen)
+        end_blocks_group.draw(screen)
 
         player.update()
 
@@ -502,7 +572,27 @@ while run:
             blue_block_group.update()
             red_block_group.update()
             game_over = 0
+        
+        if credits_menu == True:
+            screen.fill(0)
+            deltaY-= 1
+            i=0
+            msg_list=[]
+            pos_list=[]
+            pygame.display.update()
+            
+            font = pygame.font.SysFont('Courier', 30)
 
+            for line in movie_credits.split('\n'):
+                msg=font.render(line, True, white)
+                msg_list.append(msg)
+                pos= msg.get_rect(center=(centerx, centery+deltaY+30*i))
+                pos_list.append(pos)
+                i=i+1
+        
+            for j in range(i):
+                screen.blit(msg_list[j], pos_list[j])
+            
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
@@ -516,6 +606,7 @@ while run:
                             blue_block_group.update()
                     if event.key == pygame.K_g:
                         if pygame.sprite.spritecollide(player, ball_group, False) and is_ball_picked_up == 0:
+                            player.rect.y = player.rect.y - 20
                             ball_group.update(world_data, player)
                         elif is_ball_picked_up == 1:
                             ball_group.update(world_data, player)
