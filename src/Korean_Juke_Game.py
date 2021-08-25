@@ -10,7 +10,7 @@ screen_width = 1200
 screen_height = 800
 
 screen = pygame.display.set_mode((screen_width, screen_height))
-pygame.display.set_caption('Korean Juke')
+pygame.display.set_caption('Korean Juke Game')
 
 #define game variables
 main_menu = True
@@ -54,7 +54,6 @@ class Button():
         if pygame.mouse.get_pressed()[0] == 0:
             self.clicked = False
 
-
         #draw button
         screen.blit(self.image, self.rect)
 
@@ -75,7 +74,7 @@ class Player():
             #get key presses
             key = pygame.key.get_pressed()
             if key[pygame.K_SPACE] and self.jumped == False and is_ball_picked_up == False:
-                self.vel_y = -15
+                self.vel_y = -18
                 self.jumped = True
             if key[pygame.K_LEFT]:
                 dx -= 5
@@ -124,9 +123,12 @@ class Player():
                         dy = tile[1].top - self.rect.bottom
                         self.vel_y = 0
                         self.jumped = False
-            
+
             #check for collision with enemies
             if pygame.sprite.spritecollide(self, ant_group, False):
+                game_over = -1
+            
+            if pygame.sprite.spritecollide(self, end_blocks_group, False):
                 game_over = -1
 
             #update player coords
@@ -169,6 +171,9 @@ class World():
         dirt_with_grass_img = pygame.image.load('img/dirt_with_grass.png')
         transparent_red_block = pygame.image.load('img/red/red_transparent.png')
         transparent_blue_block = pygame.image.load('img/blue/blue_transparent.png')
+        blank = pygame.image.load('img/blank.png')
+        end_image = pygame.image.load('img/start_tent.png')
+        plane = pygame.image.load('img/end_plane.png')
 
         row_count = 0
         for row in data:
@@ -213,6 +218,15 @@ class World():
                     block_tile = (red_block.image, red_block.rect)
                     self.tile_list.append(block_tile)
                     red_block_group.add(red_block)
+                if tile == 6:
+                    img = pygame.transform.scale(end_image, (tile_size*2, tile_size))
+                    img_rect = img.get_rect()
+                    img_rect.x = col_count * tile_size
+                    img_rect.y = row_count * tile_size
+                    tile = (img, img_rect)
+                    self.transparent_blocks.append(tile)
+                    end_block = EndBlock(col_count * tile_size, row_count * tile_size)
+                    end_blocks_group.add(end_block)
                 if tile == 8:
                     blue_switch = BlueSwitch(col_count * tile_size, row_count * tile_size)
                     blue_switch_group.add(blue_switch)
@@ -222,6 +236,13 @@ class World():
                 if tile == 10:
                     ball = Ball(col_count * tile_size, row_count * tile_size)
                     ball_group.add(ball)
+                if tile == 11:
+                    img = pygame.transform.scale(plane, (tile_size*2, tile_size))
+                    img_rect = img.get_rect()
+                    img_rect.x = col_count * tile_size
+                    img_rect.y = row_count * tile_size
+                    tile = (img, img_rect)
+                    self.transparent_blocks.append(tile)
                 col_count += 1
             row_count += 1
     
@@ -408,7 +429,6 @@ class RedBlock(Block):
             self.rect.x = self.start_x
             self.rect.y = self.start_y
 
-
 class BlueBlock(Block):
     def __init__(self, x, y):
         self.image_path = f'img/blue/dirt.png'
@@ -426,15 +446,19 @@ class BlueBlock(Block):
             self.rect.x = self.start_x
             self.rect.y = self.start_y
 
+class EndBlock(Block):
+    def __init__(self, x, y):
+        self.image_path = f'img/blank.png'
+        Block.__init__(self, x, y, self.image_path)
 
 world_data = [
-[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 
+[1, 11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], 
 [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], 
 [1, 0, 0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], 
 [1, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], 
 [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 8, 2, 0, 0, 0, 0, 1], 
-[1, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 9, 2, 1, 0, 2, 2, 1, 0, 0, 0, 0, 1], 
-[1, 0, 0, 2, 2, 2, 2, 2, 2, 4, 4, 2, 2, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 1], 
+[1, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 9, 2, 1, 0, 2, 2, 1, 0, 0, 0, 0, 1], 
+[1, 0, 0, 0, 2, 2, 2, 2, 2, 4, 4, 2, 2, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 1], 
 [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], 
 [1, 0, 0, 3, 0, 0, 0, 0, 1, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 1], 
 [1, 2, 2, 2, 2, 2, 0, 0, 1, 2, 2, 2, 2, 2, 2, 4, 4, 4, 2, 2, 2, 2, 2, 1], 
@@ -442,7 +466,7 @@ world_data = [
 [1, 0, 0, 0, 0, 0, 0, 0, 8, 0, 4, 0, 0, 0, 5, 0, 0, 3, 0, 0, 0, 0, 8, 1], 
 [1, 0, 0, 2, 2, 5, 5, 5, 2, 2, 5, 5, 5, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1], 
 [1, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 
-[1, 0, 0, 1, 0, 0, 3, 0, 0, 0, 0, 3, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 
+[1, 6, 0, 1, 0, 0, 3, 0, 0, 0, 0, 3, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 
 [1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] 
 ]
 
@@ -455,6 +479,7 @@ blue_switch_group = pygame.sprite.Group()
 ball_group = pygame.sprite.Group()
 blue_block_group = pygame.sprite.Group()
 red_block_group = pygame.sprite.Group()
+end_blocks_group = pygame.sprite.Group()
 
 world = World(world_data)
 
@@ -467,6 +492,7 @@ while run:
 
     clock.tick(fps)
     screen.blit(background_image, (0, 0))
+    #screen.blit(end_image, (3, 15))
 
     if main_menu == True:
         if exit_button.draw():
@@ -488,6 +514,7 @@ while run:
         ball_group.draw(screen)
         blue_block_group.draw(screen)
         red_block_group.draw(screen)
+        end_blocks_group.draw(screen)
 
         player.update()
 
