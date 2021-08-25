@@ -14,6 +14,7 @@ pygame.display.set_caption('Korean Juke Game')
 
 #define game variables
 main_menu = True
+credits_menu = False
 tile_size = 50
 game_over = 0
 red_switches_state = 0
@@ -24,12 +25,11 @@ is_ball_picked_up = 0
 background_image = pygame.image.load('img/background.bmp')
 background_image = pygame.transform.scale(background_image, (screen_width, screen_height))
 start_image = pygame.image.load('img/button/start.png')
+start_image = pygame.transform.scale(start_image, (2*tile_size, 2*tile_size))
 exit_image = pygame.image.load('img/button/exit.png')
-
-# def draw_grid():
-# 	for line in range(0, 24):
-# 		pygame.draw.line(screen, (255, 255, 255), (0, line * tile_size), (screen_width, line * tile_size))
-# 		pygame.draw.line(screen, (255, 255, 255), (line * tile_size, 0), (line * tile_size, screen_height))
+exit_image = pygame.transform.scale(exit_image, (2*tile_size, 2*tile_size))
+help_image = pygame.image.load('img/button/help.png')
+help_image = pygame.transform.scale(help_image, (2*tile_size, 2*tile_size))
 
 class Button():
     def __init__(self, x, y, image):
@@ -67,7 +67,7 @@ class Player():
         dx = 0
         dy = 0
         walk_cooldown = 10
-        global game_over, red_switches_state, blue_switches_state, is_ball_picked_up
+        global game_over, red_switches_state, blue_switches_state, is_ball_picked_up, credits_menu
 
         if game_over == 0:
 
@@ -90,15 +90,26 @@ class Player():
                 self.image = self.images_left[self.index]
             
             #animation
-            if self.counter > walk_cooldown:
-                self.counter = 0
-                self.index += 1
-                if self.index >= len(self.images_left):
-                    self.index = 0
-            if self.direction == 1:
-                self.image = self.images_right[self.index]
-            if self.direction == -1:
-                self.image = self.images_left[self.index]
+            if is_ball_picked_up == 0:
+                if self.counter > walk_cooldown:
+                    self.counter = 0
+                    self.index += 1
+                    if self.index >= len(self.images_left):
+                        self.index = 0
+                if self.direction == 1:
+                    self.image = self.images_right[self.index]
+                if self.direction == -1:
+                    self.image = self.images_left[self.index]
+            if is_ball_picked_up == 1:
+                if self.counter > walk_cooldown:
+                    self.counter = 0
+                    self.index += 1
+                    if self.index >= len(self.images_left_with_ball):
+                        self.index = 0
+                if self.direction == 1:
+                    self.image = self.images_right_with_ball[self.index]
+                if self.direction == -1:
+                    self.image = self.images_left_with_ball[self.index]
 
             #gravity
             self.vel_y += 1
@@ -128,7 +139,9 @@ class Player():
             if pygame.sprite.spritecollide(self, ant_group, False):
                 game_over = -1
             
-            if pygame.sprite.spritecollide(self, end_blocks_group, False):
+            if pygame.sprite.spritecollide(self, end_blocks_group, False) and is_ball_picked_up:
+                credits_menu = True
+            if pygame.sprite.spritecollide(self, end_blocks_group, False) and is_ball_picked_up == False:
                 game_over = -1
 
             #update player coords
@@ -136,11 +149,16 @@ class Player():
             self.rect.y += dy
 
         #draw player onto screen
-        screen.blit(self.image, self.rect)
-        #pygame.draw.rect(screen, (255,255,255), self.rect, 2)
+        if is_ball_picked_up:
+            screen.blit(self.image, (self.rect.x, self.rect.y - 20))
+        else:
+            screen.blit(self.image, self.rect)
+
     def reset(self, x, y):
         self.images_right = []
         self.images_left = []
+        self.images_right_with_ball = []
+        self.images_left_with_ball = []
         self.index = 0
         self.counter = 0
         for num in range(2):
@@ -149,6 +167,12 @@ class Player():
             img_right = pygame.transform.flip(img_left, True, False)
             self.images_right.append(img_right)
             self.images_left.append(img_left)
+        for num in range(2):
+            img_left = pygame.image.load(f'img/juke_with_ball{num}.png')
+            img_left = pygame.transform.scale(img_left, (80, 60))
+            img_right = pygame.transform.flip(img_left, True, False)
+            self.images_right_with_ball.append(img_right)
+            self.images_left_with_ball.append(img_left)
         self.image = self.images_right[self.index]
         self.rect = self.image.get_rect()
         self.rect.x = x
@@ -249,10 +273,8 @@ class World():
     def draw(self):
         for tile in self.tile_list:
             screen.blit(tile[0], tile[1])
-            #pygame.draw.rect(screen, (255, 0, 0), tile[1], 2)
         for block in self.transparent_blocks:
             screen.blit(block[0], block[1])
-            #pygame.draw.rect(screen, (255, 255, 255), block[1], 2)
 
 
 class Switch(pygame.sprite.Sprite):
@@ -484,22 +506,44 @@ end_blocks_group = pygame.sprite.Group()
 world = World(world_data)
 
 #buttons
-start_button = Button(screen_width // 2 - 25, screen_height // 2, start_image)
-exit_button = Button(screen_width // 2 - 25, screen_height // 2  + 150, exit_image)
+start_button = Button(screen_width // 2 - 50, screen_height // 2, start_image)
+exit_button = Button(screen_width // 2 - 50, screen_height // 2  + 125, exit_image)
+help_button = Button(screen_width // 2 - 50, screen_height // 2  + 250, help_image)
+back_button = Button(screen_width // 2 - 50, screen_height // 2, start_image)
+
+#credits variables
+red = (255,0,0)
+green = (0,255,0)
+blue = (0,0,255)
+darkBlue = (0,0,128)
+white = (255,255,255)
+black = (0,0,0)
+pink = (255,200,200)
+
+movie_credits = '''
+KOREAN JUKE GAME
+
+SEBASTIAN SKROBICH      level designer
+ŁUKASZ WYLEGAŁA         game director
+TEN CO JE CHLEB         graphic designer
+
+POZNAN 2021
+'''
+
+centerx, centery = screen.get_rect().centerx, screen.get_rect().centery
+deltaY = centery + 50 
 
 run = True
 while run:
 
     clock.tick(fps)
     screen.blit(background_image, (0, 0))
-    #screen.blit(end_image, (3, 15))
 
     if main_menu == True:
         if exit_button.draw():
             run = False
         if start_button.draw():
             main_menu = False
-    
     else:
 
         world.draw()
@@ -529,7 +573,27 @@ while run:
             blue_block_group.update()
             red_block_group.update()
             game_over = 0
+        
+        if credits_menu == True:
+            screen.fill(0)
+            deltaY-= 1
+            i=0
+            msg_list=[]
+            pos_list=[]
+            pygame.display.update()
+            
+            font = pygame.font.SysFont('Courier', 30)
 
+            for line in movie_credits.split('\n'):
+                msg=font.render(line, True, white)
+                msg_list.append(msg)
+                pos= msg.get_rect(center=(centerx, centery+deltaY+30*i))
+                pos_list.append(pos)
+                i=i+1
+        
+            for j in range(i):
+                screen.blit(msg_list[j], pos_list[j])
+            
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
@@ -543,6 +607,7 @@ while run:
                             blue_block_group.update()
                     if event.key == pygame.K_g:
                         if pygame.sprite.spritecollide(player, ball_group, False) and is_ball_picked_up == 0:
+                            player.rect.y = player.rect.y - 20
                             ball_group.update(world_data, player)
                         elif is_ball_picked_up == 1:
                             ball_group.update(world_data, player)
