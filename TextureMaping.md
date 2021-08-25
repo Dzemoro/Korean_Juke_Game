@@ -16,7 +16,6 @@ All used in game textures and corresponding ID in maps is displayed in table bel
 |-|Red grass block|32x32| ![image](img/red/dirt_with_grass.png)|No|
 |6|Blank Barrier|32x32|![image](img/blank.png)|No|
 |-|Blank Barrier Visible|32x32|![image](img/blank_visible.png)|No|
-|7|-|-|-|No|
 |8|Blue switch|32x32|![image](img/blueSwitch0.png)| Yes (2)|
 |9|Red switch|32x32|![image](img/redSwitch0.png)| Yes (2)|
 |-|Juke|54x32|![image](img/juke0.png)| Yes (2)|
@@ -28,6 +27,7 @@ All used in game textures and corresponding ID in maps is displayed in table bel
 |-|Stone|32x32|![image](img/stone.png)|No|
 |-|Start Tent|64x32|![image](img/start_tent.png)|No|
 |-|End Plane|64x32|![image](img/end_plane.png)|No|
+|7|Title|64x32|![image](img/title.png)|No|
 |-|Start button|16x16|![image](img/button/start.png)|No|
 |-|Exit button|16x16|![image](img/button/exit.png)|No|
 |-|Help button|16x16|![image](img/button/help.png)|No|
