@@ -1,13 +1,21 @@
 # Korean_Juke_Game
 
-Textures mapping:
-1 - dirt
-2 - grass
-3 - ant
-4 - blue block with increased transparency
-5 - red block with increased transparency
-8 - blue switch
-9 - red switch
-10 - ball
-11 - start
-12 - end
+## About
+
+This is a birthday present platformer game. You play as Juke (mostly known as beetle). Your challange is to dive from plane and arrive at home tent avoiding the ants. The game is designed to be played in a single player mode. As you noticed there are South Korean vibes in the game. Made for fun. Fast and as after work task.
+
+## Requirements
+
+Game requires a PC with Python3.6 or higher with pygame installed.
+
+## How to run
+
+To run game using python simply run as every other python program using:
+
+```shell
+python3 Korean_Juke_Game.py
+```
+
+## How to play
+
+Somthing will show here later.
