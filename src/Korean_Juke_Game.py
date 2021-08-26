@@ -543,6 +543,25 @@ while run:
             run = False
         if start_button.draw():
             main_menu = False
+    elif credits_menu == True:
+        screen.fill(0)
+        deltaY-= 1
+        i=0
+        msg_list=[]
+        pos_list=[]
+        
+        font = pygame.font.SysFont('Courier', 30)
+
+        for line in movie_credits.split('\n'):
+            msg=font.render(line, True, white)
+            msg_list.append(msg)
+            pos= msg.get_rect(center=(centerx, centery+deltaY+30*i))
+            pos_list.append(pos)
+            i=i+1
+    
+        for j in range(i):
+            screen.blit(msg_list[j], pos_list[j])
+
     else:
 
         world.draw()
@@ -572,27 +591,7 @@ while run:
             blue_block_group.update()
             red_block_group.update()
             game_over = 0
-        
-        if credits_menu == True:
-            screen.fill(0)
-            deltaY-= 1
-            i=0
-            msg_list=[]
-            pos_list=[]
-            pygame.display.update()
-            
-            font = pygame.font.SysFont('Courier', 30)
-
-            for line in movie_credits.split('\n'):
-                msg=font.render(line, True, white)
-                msg_list.append(msg)
-                pos= msg.get_rect(center=(centerx, centery+deltaY+30*i))
-                pos_list.append(pos)
-                i=i+1
-        
-            for j in range(i):
-                screen.blit(msg_list[j], pos_list[j])
-            
+ 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
