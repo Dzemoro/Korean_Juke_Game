@@ -22,13 +22,13 @@ blue_switches_state = 0
 is_ball_picked_up = 0
 
 #load images
-background_image = pygame.image.load('img/background.bmp')
+background_image = pygame.image.load(f'img/background.bmp')
 background_image = pygame.transform.scale(background_image, (screen_width, screen_height))
-start_image = pygame.image.load('img/button/start.png')
+start_image = pygame.image.load(f'img/button/start.png')
 start_image = pygame.transform.scale(start_image, (2*tile_size, 2*tile_size))
-exit_image = pygame.image.load('img/button/exit.png')
+exit_image = pygame.image.load(f'img/button/exit.png')
 exit_image = pygame.transform.scale(exit_image, (2*tile_size, 2*tile_size))
-title_image = pygame.image.load('img/title.png')
+title_image = pygame.image.load(f'img/title.png')
 title_image = pygame.transform.scale(title_image, (12*tile_size, 6*tile_size))
 
 class Button():
